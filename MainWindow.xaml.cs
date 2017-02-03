@@ -249,14 +249,18 @@ namespace _3DHologramPrototype
         private void MoveLeft(double delta)
         {
             VarZ--;
-            //VarZ = -10;
+            if (App.IsKinectMode)
+                VarZ -= 15;
             Reset(delta);
         }
 
         private void MoveRight(double delta)
         {
-            VarZ++;
-            //VarZ = 10;
+            if (App.IsKinectMode)
+                VarZ = 15;
+            else
+                VarZ++;
+
             Reset(delta);
         }
 

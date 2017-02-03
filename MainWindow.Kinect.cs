@@ -2,6 +2,7 @@
 using Microsoft.Kinect;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 
@@ -122,7 +123,7 @@ namespace _3DHologramPrototype
                             var activeHand = BodyHelper.GetActiveHand(jointPoints[JointType.HandTipLeft],
                                 jointPoints[JointType.HandTipRight]);
 
-                            DrawHand(activeHand, body.HandLeftState, jointPoints[JointType.HandLeft], dc, JointType.HandLeft);
+                         //   DrawHand(activeHand, body.HandLeftState, jointPoints[JointType.HandLeft], dc, JointType.HandLeft);
                             DrawHand(activeHand, body.HandRightState, jointPoints[JointType.HandRight], dc, JointType.HandRight);
                         }
                     }
@@ -264,33 +265,61 @@ namespace _3DHologramPrototype
 
         private void DrawHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
         {
+            
             var direction = MovementDirection.Right;
-            var trigger = 10;
+            var trigger = 20;
             double delta = 0;
-            _mouseDown = activeHand == jointType && (handState == HandState.Closed || handState == HandState.Lasso);
-           
-            if (activeHand == jointType)
+            _mouseDown = handState == HandState.Closed;
+
+            delta = handPosition.X - LastRightX;
+            if (delta < 0)
             {
-                var coordinate = activeHand == JointType.HandLeft ? LastLeftX : LastRightX;
-
-                delta = handPosition.X - coordinate;
-                if (delta < 0)
-                {
-                    direction = MovementDirection.Left;
-                    delta *= -1;
-                }
-
-                if (delta > trigger)
-                {
-                    if(coordinate == LastLeftX)
-                        LastLeftX = Convert.ToInt32(handPosition.X);
-                    else
-                        LastRightX = Convert.ToInt32(handPosition.X);
-                }
+                direction = MovementDirection.Left;
+                delta *= -1;
             }
 
-            if (delta >= trigger && activeHand == jointType)
+            if (handState != HandState.Closed)
+            {
+                VarZ = 0;
+            }
+
+            if (delta > trigger)
+                LastRightX = Convert.ToInt32(handPosition.X);
+           
+            if (delta >= trigger)
                 InvokeKinectMovement(direction, delta);
+            else
+            {
+                VarZ = 0;
+            }
+
+            //var direction = MovementDirection.Right;
+            //var trigger = 10;
+            //double delta = 0;
+            //_mouseDown = activeHand == jointType && (handState == HandState.Closed || handState == HandState.Lasso);
+
+            //if (activeHand == jointType)
+            //{
+            //    var coordinate = activeHand == JointType.HandLeft ? LastLeftX : LastRightX;
+
+            //    delta = handPosition.X - coordinate;
+            //    if (delta < 0)
+            //    {
+            //        direction = MovementDirection.Left;
+            //        delta *= -1;
+            //    }
+
+            //    if (delta > trigger)
+            //    {
+            //        if(coordinate == LastLeftX)
+            //            LastLeftX = Convert.ToInt32(handPosition.X);
+            //        else
+            //            LastRightX = Convert.ToInt32(handPosition.X);
+            //    }
+            //}
+
+            //if (delta >= trigger && activeHand == jointType)
+            //    InvokeKinectMovement(direction, delta);
 
             switch (handState)
             {
