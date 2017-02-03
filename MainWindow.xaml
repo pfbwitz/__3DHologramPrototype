@@ -1,0 +1,56 @@
+﻿<Window x:Class="_3DHologramPrototype.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:helix="http://helix-toolkit.org/wpf"
+          WindowStyle="None"
+        Closing="Window_Closing"
+        ResizeMode="NoResize"
+        Background="Black"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        Title="MainWindow" Height="600" Width="600">
+    <Grid x:Name="Grid" IsHitTestVisible="False">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="200"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+        <helix:HelixViewport3D IsHitTestVisible="False" x:Name="viewPort3dTop" ZoomExtentsWhenLoaded="true" Grid.Row="0" Grid.Column="1" 
+                               IsMoveEnabled="False" IsRotationEnabled="False" IsPanEnabled="False" ShowViewCube="False">
+            <helix:SunLight/>
+            <ModelVisual3D x:Name="Top" />
+        </helix:HelixViewport3D>
+        <helix:HelixViewport3D IsHitTestVisible="False" x:Name="viewPort3dBottom" ZoomExtentsWhenLoaded="true" Grid.Row="2" Grid.Column="1" RenderTransformOrigin=".5, .5"  
+                               IsMoveEnabled="False" IsRotationEnabled="False" IsPanEnabled="False" ShowViewCube="False">
+            <helix:HelixViewport3D.RenderTransform>
+                <RotateTransform Angle="180" />
+            </helix:HelixViewport3D.RenderTransform>
+            <helix:SunLight/>
+            <ModelVisual3D x:Name="Bottom" />
+        </helix:HelixViewport3D>
+        <helix:HelixViewport3D IsHitTestVisible="False" x:Name="viewPort3dLeft" ZoomExtentsWhenLoaded="true" Grid.Row="1" Grid.Column="0" RenderTransformOrigin=".5, .5"  
+                               IsMoveEnabled="False" IsRotationEnabled="False" IsPanEnabled="False" ShowViewCube="False">
+            <helix:HelixViewport3D.RenderTransform>
+                <RotateTransform Angle="270" />
+            </helix:HelixViewport3D.RenderTransform>
+            <helix:SunLight/>
+            <ModelVisual3D x:Name="Left" />
+        </helix:HelixViewport3D>
+        <helix:HelixViewport3D IsHitTestVisible="False" x:Name="viewPort3dRight" ZoomExtentsWhenLoaded="true" Grid.Row="1" Grid.Column="2" RenderTransformOrigin=".5, .5"  
+                               IsMoveEnabled="False" IsRotationEnabled="False" IsPanEnabled="False" ShowViewCube="False">
+            <helix:HelixViewport3D.RenderTransform>
+                <RotateTransform Angle="90" />
+            </helix:HelixViewport3D.RenderTransform>
+            <helix:SunLight/>
+            <ModelVisual3D x:Name="Right" />
+        </helix:HelixViewport3D>
+        <Viewbox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" x:Name="SkeletonBox" Width="200" Height="200">
+            <Image Source="{Binding ImageSource}" Stretch="UniformToFill" x:Name="SkeletonImage" />
+        </Viewbox>
+    </Grid>
+</Window>
