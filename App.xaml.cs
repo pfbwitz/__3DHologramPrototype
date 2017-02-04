@@ -4,6 +4,6 @@ namespace _3DHologramPrototype
 {
     public partial class App : Application
     {
-        public static bool IsKinectMode = true;
+        public static bool IsKinectMode = false;
     }
 }

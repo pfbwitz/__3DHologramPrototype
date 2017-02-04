@@ -120,11 +120,13 @@ namespace _3DHologramPrototype
 
                             DrawBody(joints, jointPoints, dc, drawPen);
 
-                            var activeHand = BodyHelper.GetActiveHand(jointPoints[JointType.HandTipLeft],
-                                jointPoints[JointType.HandTipRight]);
+                            var activeHand = BodyHelper.GetActiveHand(jointPoints[JointType.HandLeft],
+                                jointPoints[JointType.HandRight]);
 
-                         //   DrawHand(activeHand, body.HandLeftState, jointPoints[JointType.HandLeft], dc, JointType.HandLeft);
-                            DrawHand(activeHand, body.HandRightState, jointPoints[JointType.HandRight], dc, JointType.HandRight);
+                            if(activeHand == JointType.HandLeft)
+                                DrawLeftHand(activeHand, body.HandLeftState, jointPoints[JointType.HandLeft], dc, JointType.HandLeft);
+                            else if (activeHand == JointType.HandRight)
+                                DrawRightHand(activeHand, body.HandRightState, jointPoints[JointType.HandRight], dc, JointType.HandRight);
                         }
                     }
 
@@ -263,9 +265,22 @@ namespace _3DHologramPrototype
             drawingContext.DrawLine(drawPen, jointPoints[jointType0].Point2D, jointPoints[jointType1].Point2D);
         }
 
-        private void DrawHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
+        private void DrawRightHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
         {
-            
+            switch (handState)
+            {
+                case HandState.Closed:
+                    drawingContext.DrawEllipse(_handClosedBrush, null, handPosition.Point2D, HandSize, HandSize);
+                    break;
+                case HandState.Open:
+                    drawingContext.DrawEllipse(_handOpenBrush, null, handPosition.Point2D, HandSize, HandSize);
+                    break;
+                case HandState.Lasso:
+                    drawingContext.DrawEllipse(_handLassoBrush, null, handPosition.Point2D, HandSize, HandSize);
+                    break;
+            }
+            if (activeHand != jointType)
+                return;
             var direction = MovementDirection.Right;
             var trigger = 20;
             double delta = 0;
@@ -292,35 +307,10 @@ namespace _3DHologramPrototype
             {
                 VarZ = 0;
             }
+        }
 
-            //var direction = MovementDirection.Right;
-            //var trigger = 10;
-            //double delta = 0;
-            //_mouseDown = activeHand == jointType && (handState == HandState.Closed || handState == HandState.Lasso);
-
-            //if (activeHand == jointType)
-            //{
-            //    var coordinate = activeHand == JointType.HandLeft ? LastLeftX : LastRightX;
-
-            //    delta = handPosition.X - coordinate;
-            //    if (delta < 0)
-            //    {
-            //        direction = MovementDirection.Left;
-            //        delta *= -1;
-            //    }
-
-            //    if (delta > trigger)
-            //    {
-            //        if(coordinate == LastLeftX)
-            //            LastLeftX = Convert.ToInt32(handPosition.X);
-            //        else
-            //            LastRightX = Convert.ToInt32(handPosition.X);
-            //    }
-            //}
-
-            //if (delta >= trigger && activeHand == jointType)
-            //    InvokeKinectMovement(direction, delta);
-
+        private void DrawLeftHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
+        {
             switch (handState)
             {
                 case HandState.Closed:
@@ -333,6 +323,36 @@ namespace _3DHologramPrototype
                     drawingContext.DrawEllipse(_handLassoBrush, null, handPosition.Point2D, HandSize, HandSize);
                     break;
             }
+            if (activeHand != jointType)
+                return;
+            var direction = MovementDirection.Right;
+            var trigger = 20;
+            double delta = 0;
+            _mouseDown = handState == HandState.Closed;
+
+            delta = handPosition.X - LastRightX;
+            if (delta < 0)
+            {
+                direction = MovementDirection.Left;
+                delta *= -1;
+            }
+
+            if (handState != HandState.Closed)
+            {
+                VarZ = 0;
+            }
+
+            if (delta > trigger)
+                LastRightX = Convert.ToInt32(handPosition.X);
+
+            if (delta >= trigger)
+                InvokeKinectMovement(direction, delta);
+            else
+            {
+                VarZ = 0;
+            }
+
+           
         }
 
         private void DrawClippedEdges(Body body, DrawingContext drawingContext)

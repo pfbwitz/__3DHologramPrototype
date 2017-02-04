@@ -6,7 +6,7 @@ namespace _3DHologramPrototype.Common
     {
         public static JointType GetActiveHand(Point3D leftHand, Point3D rightHand)
         {
-            if (leftHand.Z > rightHand.Z)
+            if (leftHand.Z < rightHand.Z)
                 return JointType.HandLeft;
             return JointType.HandRight;
         }

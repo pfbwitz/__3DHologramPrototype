@@ -31,6 +31,8 @@ namespace _3DHologramPrototype
 
         private double _lastMouseX;
 
+        private double _lastMouseY;
+
         private int _mouseWheelUp;
 
         private int _mouseWheelDown;
@@ -179,18 +181,46 @@ namespace _3DHologramPrototype
                             {
                                 if (_isAnimating)
                                     VarZ = AutoAnimationSpeed;
+
+                                direction = MovementDirection.Down;
+                                position = Mouse.GetPosition(this).Y;
+                                delta = position - _lastMouseY;
+                                if (delta < 0)
+                                {
+                                    delta *= -1;
+                                    direction = MovementDirection.Up;
+                                }
+                                if (delta % trigger < 3 || !_mouseDown)
+                                {
+                                    if (_isAnimating)
+                                        VarY = AutoAnimationSpeed;
+                                    return;
+                                }
+
+                                if (position >= _lastMouseY - 10 && position <= _lastMouseY + 10)
+                                {
+                                    VarY = _isAnimating ? AutoAnimationSpeed : 0;
+                                    ResetX(delta);
+                                }
+                                else if (direction == MovementDirection.Up)
+                                    MoveUp(delta);
+                                else
+                                    MoveDown(delta);
+
+                                _lastMouseY = position;
                                 return;
                             }
 
                             if (position >= _lastMouseX - 10 && position <= _lastMouseX + 10)
                             {
                                 VarZ = _isAnimating ? AutoAnimationSpeed : 0;
-                                Reset(delta);
+                                ResetZ(delta);
                             }
                             else if (direction == MovementDirection.Left)
                                 MoveLeft(delta);
                             else
                                 MoveRight(delta);
+
                             _lastMouseX = position;
                         }));
                     }
@@ -238,7 +268,15 @@ namespace _3DHologramPrototype
             }
         }
 
-        private void Reset(double delta)
+        private void ResetY(double delta)
+        {
+            RotateY(Top);
+            RotateY(Bottom);
+            RotateY(Left);
+            RotateY(Right);
+        }
+
+        private void ResetZ(double delta)
         {
             RotateZ(Top);
             RotateZ(Bottom);
@@ -246,12 +284,38 @@ namespace _3DHologramPrototype
             RotateZ(Right);
         }
 
+        private void ResetX(double delta)
+        {
+            RotateX(Top);
+            RotateX(Bottom);
+            RotateX(Left);
+            RotateX(Right);
+        }
+
+        private void MoveUp(double delta)
+        {
+            VarX--;
+            if (App.IsKinectMode)
+                VarX -= 15;
+            ResetX(delta);
+        }
+
+        private void MoveDown(double delta)
+        {
+            if (App.IsKinectMode)
+                VarX = 15;
+            else
+                VarX++;
+
+            ResetX(delta);
+        }
+
         private void MoveLeft(double delta)
         {
             VarZ--;
             if (App.IsKinectMode)
                 VarZ -= 15;
-            Reset(delta);
+            ResetZ(delta);
         }
 
         private void MoveRight(double delta)
@@ -261,7 +325,7 @@ namespace _3DHologramPrototype
             else
                 VarZ++;
 
-            Reset(delta);
+            ResetZ(delta);
         }
 
         private void RotateX(ModelVisual3D model)
@@ -305,7 +369,7 @@ namespace _3DHologramPrototype
                 AutoAnimationSpeed = -AutoAnimationSpeed;
             _timer = new System.Windows.Forms.Timer { Interval = interval };
             VarZ = AutoAnimationSpeed;
-            _timer.Tick += (s, a) => Reset(0);
+            _timer.Tick += (s, a) => ResetZ(0);
             _timer.Start();
         }
 
