@@ -12,9 +12,15 @@ namespace _3DHologramPrototype
     {
         #region properties
 
+        private const int MovementTrigger = 10;
+
         public int LastLeftX { get; private set; }
 
-        public int LastRightX { get; set; }
+        public int LastRightX { get; private set; }
+
+        public int LastLeftY { get; private set; }
+
+        public int LastRightY { get; private set; }
 
         private const double HandSize = 30;
 
@@ -265,52 +271,90 @@ namespace _3DHologramPrototype
             drawingContext.DrawLine(drawPen, jointPoints[jointType0].Point2D, jointPoints[jointType1].Point2D);
         }
 
-        private void DrawRightHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
+        private MovementDirection GetDirection(MovementDirection defaultDirection, MovementDirection altDirection, double newPos, double oldPos, int trigger, out double delta)
         {
-            switch (handState)
-            {
-                case HandState.Closed:
-                    drawingContext.DrawEllipse(_handClosedBrush, null, handPosition.Point2D, HandSize, HandSize);
-                    break;
-                case HandState.Open:
-                    drawingContext.DrawEllipse(_handOpenBrush, null, handPosition.Point2D, HandSize, HandSize);
-                    break;
-                case HandState.Lasso:
-                    drawingContext.DrawEllipse(_handLassoBrush, null, handPosition.Point2D, HandSize, HandSize);
-                    break;
-            }
-            if (activeHand != jointType)
-                return;
-            var direction = MovementDirection.Right;
-            var trigger = 20;
-            double delta = 0;
-            _mouseDown = handState == HandState.Closed;
+            var direction = defaultDirection;
 
-            delta = handPosition.X - LastRightX;
+            delta = newPos - oldPos;
             if (delta < 0)
             {
                 direction = MovementDirection.Left;
                 delta *= -1;
             }
+            return direction;
+        }
 
-            if (handState != HandState.Closed)
-            {
+        private void DrawRightHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
+        {
+            DrawHand(handState, handPosition, drawingContext);
+
+            if (activeHand != jointType)
+                return;
+
+            _mouseDown = handState == HandState.Closed;
+
+            //horizontal
+            double delta;
+            var direction = GetDirection(MovementDirection.Right, MovementDirection.Left, handPosition.X, LastRightX, out delta);
+
+            if (!_mouseDown || delta < MovementTrigger)
                 VarZ = 0;
+
+            if (delta >= MovementTrigger)
+            {
+                LastRightX = Convert.ToInt32(handPosition.X);
+                InvokeKinectMovement(direction, delta);
             }
 
-            if (delta > trigger)
-                LastRightX = Convert.ToInt32(handPosition.X);
-           
-            if (delta >= trigger)
-                InvokeKinectMovement(direction, delta);
-            else
+            //vertical
+            direction = GetDirection(MovementDirection.Up, MovementDirection.Down, handPosition.Y, LastRightY, out delta);
+
+            if (!_mouseDown || delta < MovementTrigger)
+                VarX = 0;
+
+            if (delta >= MovementTrigger)
             {
-                VarZ = 0;
+                LastRightY = Convert.ToInt32(handPosition.Y);
+                InvokeKinectMovement(direction, delta);
             }
         }
 
         private void DrawLeftHand(JointType activeHand, HandState handState, Point3D handPosition, DrawingContext drawingContext, JointType jointType)
         {
+            DrawHand(handState, handPosition, drawingContext);
+            if (activeHand != jointType)
+                return;
+
+            _mouseDown = handState == HandState.Closed;
+
+            //horizontal
+            double delta;
+            var direction = GetDirection(MovementDirection.Right, MovementDirection.Left, handPosition.X, LastLeftX, out delta);
+         
+            if (!_mouseDown || delta < MovementTrigger)
+                VarZ = 0;
+            
+            if (delta >= MovementTrigger)
+            {
+                LastRightX = Convert.ToInt32(handPosition.X);
+                InvokeKinectMovement(direction, delta);
+            }
+
+            //vertical
+            direction = GetDirection(MovementDirection.Up, MovementDirection.Down, handPosition.Y, LastLeftY, out delta);
+
+            if (!_mouseDown || delta < MovementTrigger)
+                VarX = 0;
+
+            if (delta >= MovementTrigger)
+            {
+                LastRightY = Convert.ToInt32(handPosition.Y);
+                InvokeKinectMovement(direction, delta);
+            }
+        }
+
+        private void DrawHand(HandState handState, Point3D handPosition, DrawingContext drawingContext)
+        {
             switch (handState)
             {
                 case HandState.Closed:
@@ -323,36 +367,6 @@ namespace _3DHologramPrototype
                     drawingContext.DrawEllipse(_handLassoBrush, null, handPosition.Point2D, HandSize, HandSize);
                     break;
             }
-            if (activeHand != jointType)
-                return;
-            var direction = MovementDirection.Right;
-            var trigger = 20;
-            double delta = 0;
-            _mouseDown = handState == HandState.Closed;
-
-            delta = handPosition.X - LastRightX;
-            if (delta < 0)
-            {
-                direction = MovementDirection.Left;
-                delta *= -1;
-            }
-
-            if (handState != HandState.Closed)
-            {
-                VarZ = 0;
-            }
-
-            if (delta > trigger)
-                LastRightX = Convert.ToInt32(handPosition.X);
-
-            if (delta >= trigger)
-                InvokeKinectMovement(direction, delta);
-            else
-            {
-                VarZ = 0;
-            }
-
-           
         }
 
         private void DrawClippedEdges(Body body, DrawingContext drawingContext)

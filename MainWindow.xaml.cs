@@ -158,7 +158,10 @@ namespace _3DHologramPrototype
 
             if (!App.IsKinectMode)
             {
-                _lastMouseX = Mouse.GetPosition(this).X;
+                var initialPosition = Mouse.GetPosition(this);
+                _lastMouseX = initialPosition.X;
+                _lastMouseY = initialPosition.Y;
+
                 Task.Run(async () =>
                 {
                     var trigger = 10;
@@ -166,62 +169,13 @@ namespace _3DHologramPrototype
                     {
                         if (!_running)
                             break;
-                        await Task.Delay(1);
+                        await Task.Delay(10);
                         await Dispatcher.BeginInvoke(new Action(() =>
                         {
-                            var direction = MovementDirection.Right;
-                            var position = Mouse.GetPosition(this).X;
-                            var delta = position - _lastMouseX;
-                            if (delta < 0)
-                            {
-                                delta *= -1;
-                                direction = MovementDirection.Left;
-                            }
-                            if (delta % trigger < 3 || !_mouseDown)
-                            {
-                                if (_isAnimating)
-                                    VarZ = AutoAnimationSpeed;
+                            var position = Mouse.GetPosition(this);
+                            HandleHorizontalRotation(position, trigger);
+                            HandleVerticalRotation(position, trigger);
 
-                                direction = MovementDirection.Down;
-                                position = Mouse.GetPosition(this).Y;
-                                delta = position - _lastMouseY;
-                                if (delta < 0)
-                                {
-                                    delta *= -1;
-                                    direction = MovementDirection.Up;
-                                }
-                                if (delta % trigger < 3 || !_mouseDown)
-                                {
-                                    if (_isAnimating)
-                                        VarY = AutoAnimationSpeed;
-                                    return;
-                                }
-
-                                if (position >= _lastMouseY - 10 && position <= _lastMouseY + 10)
-                                {
-                                    VarY = _isAnimating ? AutoAnimationSpeed : 0;
-                                    ResetX(delta);
-                                }
-                                else if (direction == MovementDirection.Up)
-                                    MoveUp(delta);
-                                else
-                                    MoveDown(delta);
-
-                                _lastMouseY = position;
-                                return;
-                            }
-
-                            if (position >= _lastMouseX - 10 && position <= _lastMouseX + 10)
-                            {
-                                VarZ = _isAnimating ? AutoAnimationSpeed : 0;
-                                ResetZ(delta);
-                            }
-                            else if (direction == MovementDirection.Left)
-                                MoveLeft(delta);
-                            else
-                                MoveRight(delta);
-
-                            _lastMouseX = position;
                         }));
                     }
                 });
@@ -236,6 +190,70 @@ namespace _3DHologramPrototype
         }
 
         #region Transformation
+
+        private void HandleHorizontalRotation(Point position, int trigger)
+        {
+            double delta;
+            var direction = GetDirection(MovementDirection.Right, MovementDirection.Left, position.X, _lastMouseX, out delta);
+            
+            if ((delta % trigger < 3 || !_mouseDown) && _isAnimating)
+                VarZ = AutoAnimationSpeed;
+            else if(_mouseDown)
+            {
+                if (CursorIsStatic(position.X, _lastMouseX))
+                {
+                    VarZ = ResetVariable();
+                    ResetZ(delta);
+                }
+                else if (direction == MovementDirection.Left)
+                    MoveLeft(delta);
+                else
+                    MoveRight(delta);
+
+                _lastMouseX = position.X;
+            }
+        }
+
+        private void HandleVerticalRotation(Point position, int trigger)
+        {
+            double delta;
+            var direction = GetDirection(MovementDirection.Down, MovementDirection.Up, position.Y, _lastMouseY, out delta);
+          
+            if ((delta % trigger < 3 || !_mouseDown) && _isAnimating)
+                VarX = AutoAnimationSpeed;
+            else if (_mouseDown)
+            {
+                if (CursorIsStatic(position.Y, _lastMouseY))
+                {
+                    VarX = ResetVariable();
+                    ResetX(delta);
+                }
+                else if (direction == MovementDirection.Up)
+                    MoveUp(delta);
+                else
+                    MoveDown(delta);
+
+                _lastMouseY = position.Y;
+            }
+        }
+
+        private MovementDirection GetDirection(MovementDirection defaultDirection, MovementDirection oppositeDirection, 
+            double newPos, double oldPos, out double delta)
+        {
+            var direction = defaultDirection;
+            delta = newPos - oldPos;
+            if (delta < 0)
+            {
+                delta *= -1;
+                direction = oppositeDirection;
+            }
+            return direction;
+        }
+
+        private bool CursorIsStatic(double position, double compare)
+        {
+            return position >= compare - 10 && position <= compare + 10;
+        }
 
         private void SetGridSize(double size)
         {
@@ -252,6 +270,11 @@ namespace _3DHologramPrototype
             SkeletonBox.Width = SkeletonBox.Height = size / Grid.RowDefinitions.Count;
         }
 
+        private double ResetVariable()
+        {
+            return _isAnimating ? AutoAnimationSpeed : 0;
+        }
+
         public void InvokeKinectMovement(MovementDirection direction, double delta)
         {
             if (_mouseDown)
@@ -263,6 +286,12 @@ namespace _3DHologramPrototype
                         break;
                     case MovementDirection.Right:
                         MoveRight(delta);
+                        break;
+                    case MovementDirection.Up:
+                        MoveUp(delta);
+                        break;
+                    case MovementDirection.Down:
+                        MoveDown(delta);
                         break;
                 }
             }
@@ -351,7 +380,9 @@ namespace _3DHologramPrototype
         {
             var matrix = model.Transform.Value;
             matrix.Rotate(new Quaternion(vector, angle));
-            model.Transform = new MatrixTransform3D(matrix);
+            var transform = new MatrixTransform3D(matrix);
+           
+            model.Transform = transform;
         }
 
         private void Zoom(ModelVisual3D model, Vector3D scale)
